@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kzm.ssm.dao.OrderDao">
+
+    <resultMap id="ordersBase" type="com.kzm.ssm.domain.Orders">
+        <id property="id" column="id"></id>
+        <result property="orderNum" column="orderNum"></result>
+        <result property="orderTime" column="orderTime"></result>
+        <result property="peopleCount" column="peopleCount"></result>
+        <result property="orderStatus" column="orderStatus"></result>
+        <result property="payType" column="payType"></result>
+        <result property="orderDesc" column="orderDesc"></result>
+    </resultMap>
+    <!--在result中嵌套sql,未使用，有bug-->
+    <resultMap id="Orders" type="com.kzm.ssm.domain.Orders" autoMapping="true">
+        <id property="" column="id"></id>
+        <result property="orderNum" column="orderNum"></result>
+        <result property="orderTime" column="orderTime"></result>
+        <result property="peopleCount" column="peopleCount"></result>
+        <result property="orderStatus" column="orderStatus"></result>
+        <result property="payType" column="payType"></result>
+        <result property="orderDesc" column="orderDesc"></result>
+        <association property="product" javaType="com.kzm.ssm.domain.Product" column="{id=productid}"
+                     select="com.kzm.ssm.dao.ProductDao.findById">
+        </association>
+        <association property="member" javaType="com.kzm.ssm.domain.Member" column="{id=memberid}"
+                     select="com.kzm.ssm.dao.MemberDao.findById"></association>
+        <collection property="travellers" javaType="java.util.List" column="{id=orderid}"
+                    select="com.kzm.ssm.dao.TravellerDao.findAllByOrdertId"></collection>
+    </resultMap>
+
+    <resultMap id="OrdersProductTravellerMember" type="com.kzm.ssm.domain.Orders" extends="ordersBase">
+        <association property="product" javaType="com.kzm.ssm.domain.Product">
+            <result property="productName" column="productName"></result>
+            <result property="cityName" column="cityName"></result>
+            <result property="departureTime" column="DepartureTime"></result>
+            <result property="productPrice" column="productPrice"></result>
+        </association>
+        <association property="member" javaType="com.kzm.ssm.domain.Member">
+            <result property="nickname" column="nickname"></result>
+            <result property="name" column="NAME"></result>
+            <result property="phoneNum" column="phoneNum"></result>
+            <result property="email" column="email"></result>
+        </association>
+        <collection property="travellers" ofType="com.kzm.ssm.domain.Traveller">
+            <result property="name" column="NAME"></result>
+            <result property="sex" column="sex"></result>
+            <result property="phoneNum" column="phoneNum"></result>
+            <result property="credentialsType" column="credentialsType"></result>
+            <result property="credentialsNum" column="credentialsNum"></result>
+        </collection>
+
+    </resultMap>
+    <!--orders只与product关联查询，采用result配置sql-->
+    <resultMap id="odersP" type="com.kzm.ssm.domain.Orders" autoMapping="true" extends="ordersBase">
+        <association property="product" javaType="com.kzm.ssm.domain.Product" column="{id=pid}"
+                     select="com.kzm.ssm.dao.ProductDao.findById">
+        </association>
+    </resultMap>
+    <!--本方法采用配置result实现嵌套查询-->
+    <select id="findById" resultMap="OrdersProductTravellerMember">
+       select o.orderNum ,
+       o.orderTime ,
+       o.peopleCount,
+       o.orderDesc,
+       o.orderStatus,
+       o.payType,
+       p.productName,
+       p.cityName,
+       p.DepartureTime,
+       p.productPrice,
+       t.travellerType,
+      t.NAME,
+      t.sex,
+      t.phoneNum,
+      t.credentialsType,
+      t.credentialsNum,
+      m.nickname,
+      m.NAME,
+      m.phoneNum,
+      m.email
+        from orders o
+        inner join product p on o.productId=p.id
+        inner join order_traveller ot on o.id=ot.orderId
+        inner join traveller t on ot.travellerId=t.id
+        inner join member m on o.memberId=m.id
+        where o.id=#{id}
+    </select>
+
+    <select id="findAll" resultMap="odersP">
+        select o.id,
+        o.orderNum,
+        o.orderTime,
+        o.orderStatus,
+        p.productName,
+        p.productPrice,
+        p.id as pid
+        from orders o
+        inner join product p on o.productId=p.id
+    </select>
+
+</mapper>

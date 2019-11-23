@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kzm.ssm.dao.RoleDao">
+    <resultMap id="RoleMapBase" type="com.kzm.ssm.domain.Role">
+        <id property="id" column="id"></id>
+        <result property="roleName" column="roleName"></result>
+        <result property="roleDesc" column="RoleDesc"></result>
+       <collection property="permissions"  resultMap="com.kzm.ssm.dao.PermissionDao.PermissionMapBase"></collection>
+    </resultMap>
+    <resultMap id="RoleMapBaseBySelect" type="com.kzm.ssm.domain.Role">
+        <id property="id" column="id"></id>
+        <result property="roleName" column="roleName"></result>
+        <result property="roleDesc" column="roleDesc"></result>
+        <collection property="permissions" ofType="com.kzm.ssm.domain.Permission" column="{id=id}" select="com.kzm.ssm.dao.PermissionDao.findPermissionByRoleId"></collection>
+    </resultMap>
+    <select id="findById" resultMap="RoleMapBaseBySelect">
+        select * from role where id=#{id};
+    </select>
+
+    <select id="findAll" resultMap="RoleMapBase">
+        select * from  role;
+    </select>
+
+    <insert id="save" parameterType="com.kzm.ssm.domain.Role">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select replace(uuid(), '-', '') as id from dual
+        </selectKey>
+        insert into role(id,roleName,roleDesc) values (#{id},#{roleName},#{roleDesc})
+    </insert>
+    <select id="findOtherPermissions" resultType="com.kzm.ssm.domain.Permission">
+        select * from
+        permission
+        where id not in
+        (select permissionId from role_permission where roleId=#{id})
+    </select>
+    <insert id="addPermissionToRole">
+        insert into role_permission(roleId,permissionId)values (#{roleId},#{permissionId})
+    </insert>
+</mapper>
